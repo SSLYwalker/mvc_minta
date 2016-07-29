@@ -24,7 +24,7 @@ class Simple_core {
     protected $m_segments; /**/
 
     public function __construct() {
-        log_message(LOGGER_INFO, 'Simple_core konstruktor start!');
+        //log_message(LOGGER_INFO, 'Simple_core konstruktor start!');
         session_start();
         global $g_config;
         $this->m_base_url = $g_config['base_url'];
@@ -63,7 +63,7 @@ class Simple_core {
                     );
                 }
                 //print('<pre>found m_parameters=' . print_r($this->m_parameters, true) . '</pre>');
-                log_message(LOGGER_INFO, 'found m_parameters=' . print_r($this->m_parameters, true));
+                log_message(LOGGER_INFO, 'found m_parameters=' . print_r($this->m_parameters, TRUE), TRUE);
                 $temporary_actual_url = substr($temporary_actual_url, 0, strpos($temporary_actual_url, '?'));
             } else {
                 $this->m_parameters = array();
@@ -106,17 +106,17 @@ class Simple_core {
                     $carr = explode('/', $value);
                     if (isset($carr [0])) {
                         $this->m_controller_name = urldecode($carr [0]);
-                        log_message(LOGGER_INFO, 'found controller=' . print_r($this->controller, true));
+                        //log_message(LOGGER_INFO, 'found controller=' . print_r($this->m_controller_name, TRUE));
                     }
                     if (isset($carr [1])) {
                         $this->m_function = $carr [1];
-                        log_message(LOGGER_INFO, 'found functionname=' . print_r($this->functionname, true));
+                        //log_message(LOGGER_INFO, 'found functionname=' . print_r($this->functionname, true));
                     }
                     for ($index = 1; isset($urlarray [$index]); $index ++) {
                         $this->m_segments [] = urldecode($urlarray [$index]);
                     }
                     if (sizeof($this->m_segments)) {
-                        log_message(LOGGER_INFO, 'found segments=' . print_r($this->segments, true));
+                        log_message(LOGGER_INFO, 'found segments=' . print_r($this->m_segments, true));
                     }
                     $retval = true;
                 }
