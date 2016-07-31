@@ -67,7 +67,8 @@ if (!function_exists('log_message')) {
         if ($loglevel <= $g_logger_loglevel && $loglevel != LOGGER_DISABLED) {
             $fh = open_logfile();
             if ($fh) {
-                add_line_to_log($loglevel, $message, $important, $fh);
+                $logline = sprintf('%-7s', getloglevelname($loglevel)) . ' - ' . @date("Y-m-d H:i:s") . ' --> ' . $message; //. "\r\n";
+                add_line_to_log($logline, $important, $fh);
                 fclose($fh);
             }
         }
@@ -94,27 +95,10 @@ function open_logfile() {
     return $fh;
 }
 
-function add_line_to_log($loglevel, $message, $important, $fh) {
+function add_line_to_log($target_string, $important, $fh) {
     //   /*Az eredeti logmessage*/
-    $logline = sprintf('%-7s', getloglevelname($loglevel)) . ' - ' . @date("Y-m-d H:i:s") . ' --> ' . $message; //. "\r\n";
-    //    /*Az átalakítás után ez fog majd a logba kiíródni*/
-    //    $new_logline = '';
-    //    /*Segéd változó a daraboláshoz*/
-    //   $temp_logline = '';
-    //   /*A keresés kezdte innen, a string daraboláshoz lesz offset*/
-    //   $start_pos = 0;
-    //   /* \r\n pozíció*/
-    //   $crlr_pos = FALSE;
-    //  /* \n pozicio*/
-    // $lr_pos = FALSE;
-    // $lr_pos = strpos($logline, "\n");
-    // $crlr_pos = strpos($logline, "\r\n");*/
-
-
-
-
-
-
+    $logline = $target_string;
+   
     $longest = find_longest_substr($logline);
     print('AAAAAAAA leghosszabb: ' . $longest);
 
@@ -126,24 +110,32 @@ function add_line_to_log($loglevel, $message, $important, $fh) {
         fputs($fh, $logline);
         fputs($fh, $markup);
     } else {
-        $logline = @sprintf('%-7s', getloglevelname($loglevel)) . ' - ' . @date("Y-m-d H:i:s") . ' --> ' . $message . "\r\n";
+        //$logline = @sprintf('%-7s', getloglevelname($loglevel)) . ' - ' . @date("Y-m-d H:i:s") . ' --> ' . $message . "\r\n";
         fputs($fh, $logline);
     }
 }
 
 Function find_longest_substr($target_string) {
     $longest = 0;
-    /* Segéd változó a daraboláshoz */
+    /** Segéd változó a daraboláshoz */
     $temp_logline = $target_string;
     print($temp_logline .'<br>');
    
-    while (find_crlr_lr_cr($temp_logline)) {
-        print(find_crlr_lr_cr($temp_logline));
-        printf($found);
+    while (list($next_lbr_type, $next_lbr_pos) = each(find_next_lbr($temp_logline))) {
+        print($next_lbr_type . 'type and pos ' . $next_lbr_pos);
+        if($next_lbr_pos > $longest){
+            $longest = $next_lbr_pos;
+            if($next_lbr_type === 'CRLR'){
+                $temp_logline = substr($temp_logline, ($next_lbr_pos + 2));
+            } else {
+                $temp_logline = substr($temp_logline, ($next_lbr_pos + 1));
+            }
+        }
+    /*    printf($found);
         switch ($found) {
             case 'CR':
-                /* \r pozicio */
-                $cr_pos = strpos($temp_logline, "\r");
+                /** \r pozicio */
+  /*              $cr_pos = strpos($temp_logline, "\r");
                 if ($longest < $cr_pos) {
                     $longest = $cr_pos;
                 }
@@ -151,7 +143,7 @@ Function find_longest_substr($target_string) {
                 break;
             case 'LR':
                 /* \n pozicio */
-                $lr_pos = strpos($temp_logline, "\n");
+    /*            $lr_pos = strpos($temp_logline, "\n");
                  if ($longest < $lr_pos) {
                     $longest = $lr_pos;
                 }
@@ -161,7 +153,7 @@ Function find_longest_substr($target_string) {
                 break;
             case 'CRLR':
                 /* \r\n pozíció */
-                $crlr_pos = strpos($temp_logline, "\r\n");
+    /*            $crlr_pos = strpos($temp_logline, "\r\n");
                 print ('Mind két pozíció létezik<br>');
                 if ($longest < $crlr_pos) {
                     $longest = $crlr_pos;
@@ -177,44 +169,56 @@ Function find_longest_substr($target_string) {
                 break;
         }
     }
-    
+    */
     return $longest;
 }
 
-function find_crlr_lr_cr($target_string) {
-    $found = FALSE;
+function find_next_lbr($target_string) {
+    $next_lbr_arr = FALSE;
 
     if ($target_string) {
-       
-        
         $cr_pos = strpos($target_string, "\r");
         $lr_pos = strpos($target_string, "\n");
         $crlr_pos = strpos($target_string, "\r\n");
-        if($cr_pos !== FALSE && $cr_pos === $crlr_pos) {
-             print ('IFFFFFFFFFFFFFFFFFFF');
-            $found = 'CRLR';
+        $next_lbr_arr = array();
+        if($cr_pos != FALSE && $cr_pos != $crlr:pos){
+            $found_arr['CR'] => $cr_pos;
         }
-        else 
-        {
-            print('ELSSSSSSSSSEEE');
-            $cr_lr_crlr_arr = array(
-                'CR' => $cr_pos,
-                'LR' => $lr_pos,
-                'CRLR' => $crlr_pos
-            );
-        
-            $found_array = array_keys($cr_lr_crlr_arr, min($cr_lr_crlr_arr));
-            print_r($found_array);
-            //print('sizeof' .sizeof($found_array));
-            if(sizeof($found_array)  === 1){
-                
-                $found = $found_array[0];
+        if($lr_pos != FALSE){
+            $found_arr['LR'] => $lr_pos;
+        }
+        if($crlr_pos !== FALSE){
+            $found_arr['CRLR'] => $crlr_pos;
+        }
+        if(size_of($found_arr) > 0){
+            $next_lbr_value = min($found_arr);
+            $next_lbr_type = array_search($next_lbr_value, $found_arr); 
+            $next_lbr_arr = array($next_lbr_type, $$next_lbr_value);
+        }
+    }    
+    return $next_lbr_arr;
+}
+
+Function add_markup_to_logline($target_string) {
+    
+    /** Segéd változó a daraboláshoz */
+    $temp_logline = $target_string;
+    print($temp_logline .'<br>');
+   if(find_next_lbr($temp_logline)){
+       $logline = '* ';
+    while (list($next_lbr_type, $next_lbr_pos) = each(find_next_lbr($temp_logline))) {
+        print($next_lbr_type . 'type and pos ' . $next_lbr_pos);
+        ////////////////////switcel folytatni
+            if($next_lbr_type === 'CRLR'){
+                $temp_logline = substr($temp_logline, ($next_lbr_pos + 2));
+            } else {
+                $temp_logline = substr($temp_logline, ($next_lbr_pos + 1));
             }
-        }
         
     }
-    var_dump($found);
-    return $found;
+   } else {
+       $logline = '* ' . $temp_logline . ' *';
+   }
 }
 
 if (!defined('logger_inited')) {
